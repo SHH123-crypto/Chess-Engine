@@ -1,0 +1,3 @@
+We have to convert the integers into bitarrays and iterate through them, keeping track of each position and mapping that position onto a single bitboard called BOARD.
+From there, Just check each of the possible spaces the pieces can move and develop the sight algorithms based on that.
+After that, we have to develop an algorithm for the possible moves a piece can make to put it into the possible_moves array in the structs.
