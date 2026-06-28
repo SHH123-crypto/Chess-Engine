@@ -123,8 +123,9 @@ mod PIECES {
 		row = (index) / 8;
 		return (row, col);
 	
-	fn piece_finder(BitVec<Lsb0, u64> piece) -> Vec<(i16, i16)> {
+	fn piece_finder(p: u64) -> Vec<(i16, i16)> {
 		let mut piece_list: Vec<(i16, i16)> = Vec::new();
+		let piece: BitVec<Lsb0, u64> = p.view_bits::<Lsb0>().to_bitvec();
 		for(i, p) in piece.iter().enumerate() {
 			if p == 1 {
 				let conv_index = index_converter(i);
@@ -137,7 +138,7 @@ mod PIECES {
 	
     let mut squares_attacked: Vec<(i16, i16)> = Vec::new();
 	
-	fn king_attack(b_king: B_KING, w_king: W_KING, b_rook: B_ROOK, w_rook: W_ROOK, b_knight: B_KNIGHT, w_knight: W_KNIGHT, w_bishop: W_BISHOP, b_bishop: B_BISHOP) {
+	fn king_attack(b_king: B_KING, w_king: W_KING, b_rook: B_ROOK, w_rook: W_ROOK, b_knight: B_KNIGHT, w_knight: W_KNIGHT, w_bishop: W_BISHOP, b_bishop: B_BISHOP, w_queen: W_QUEEN, w_pawn: W_PAWN) {
 		let b_k: BitVec<Lsb0, u64> = b_king.POSITIONS;
 		
 		let b_king_loc = piece_finder(b_k)[0];
@@ -168,7 +169,7 @@ mod PIECES {
 		
 		//a thread for each piece that checks if any movement of the king isn't possible. 
 		
-		thread::spawn(|| {
+		let a = thread::spawn(|| {
 			w_rook_l = piece_finder(w_rook.POSITIONS);
 			for (i, k) in squares_attacked.iter().enumerate() {
 				for r in w_rook_l {
@@ -179,7 +180,7 @@ mod PIECES {
 			}
 		});
 		
-		thread::spawn(|| {
+		let b = thread::spawn(|| {
 			w_knight_l = piece_finder(w_knight.POSITIONS);
 			for (i, k) in squares_attacked.iter().enumerate() {
 				for b in w_knight_l {
@@ -229,9 +230,8 @@ mod PIECES {
 				}
 			}
 		});
-		//For diagonal pieces get the slope between the two points and check if it is a slope of 1
-		//For pawns and the bitboards and check if the two diagonals in front of the king are 1s or not
-		thread::spawn( || {
+
+		let c = thread::spawn( || {
 			w_bish_l = piece_finder(w_bishop.POSITIONS);
 			for (i, k) in squares_attacked.iter().enumerate() {
 				for b in w_bish_l {
@@ -243,7 +243,7 @@ mod PIECES {
 			}
 		});
 		
-		thread::spawn ( || {
+		let d = thread::spawn ( || {
 			w_queen_l = piece_finder(w_queen.POSITIONS);
 			for (i, k) in squares_attacked.iter().enumerate() {
 				for q in w_queen_l {
@@ -255,7 +255,7 @@ mod PIECES {
 			}
 		});
 		
-		thread::spawn( || {
+		let e = thread::spawn( || {
 			w_king_p = piece_finder(w_king.POSITIONS)[0];
 			for (i, k) in squares_attacked.iter().enumerate() {
 				let distance = (( (float) w_king_p.1 - (float) k.1).pow(2) + ( (float) w_king_p.1 - (float) k.1).pow(2)).sqrt();
@@ -265,6 +265,21 @@ mod PIECES {
 			}
 		});
 		
+		let f = thread::spawn( || {
+			w_pawn_p = piece_finder(w_pawn.POSITIONS);
+			for (i, k) in squares_attacked.iter().enumerate() {
+				for p in w_pawn_p {
+					let upd_p_1 = (p.0, p.1 + 1);
+					let upd_p_2 = (p.0 + 1, p.1 + 1);
+					let upd_p_3 = (p.0 - 1, p.1 + 1);
+					if upd_p_1 == k || upd_p_2 == k || upd_p_3 == k {
+						squares_attacked.remove(i);
+					}
+				}
+			}
+		});
+		
+		//we need to make the variables from the main thread easily accessible to the variables in the other threads by sharing ownership
 		
 			
 				
