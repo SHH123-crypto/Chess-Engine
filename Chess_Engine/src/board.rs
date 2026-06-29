@@ -279,8 +279,7 @@ mod PIECES {
 			}
 		});
 		
-		//we need to make the variables from the main thread easily accessible to the variables in the other threads by sharing ownership
-		
+		//nah update lowk remove the threads it aint worth it we need to use those for the search algos anyways
 			
 				
 		
